@@ -1,4 +1,5 @@
 import os
+import re
 import click
 from flask import current_app, g
 
@@ -34,6 +35,14 @@ class _PGConnWrapper:
 
     @staticmethod
     def _to_pg(sql):
+        # "user" is a reserved keyword in Postgres (it doubles as the
+        # CURRENT_USER function), so every unquoted reference to the
+        # `user` table — FROM user, JOIN user, INTO user, UPDATE user,
+        # etc. — must be rewritten to the quoted identifier "user".
+        # This regex only matches the standalone word "user" (not
+        # "user_id", "users", "reported_by", etc.) so it's safe to run
+        # over the whole query string.
+        sql = re.sub(r'(?<![\w"])user(?![\w"])', '"user"', sql)
         # This app only ever uses "?" as a placeholder character, so a
         # straight replace is safe here.
         return sql.replace("?", "%s")
