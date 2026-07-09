@@ -39,10 +39,11 @@ class _PGConnWrapper:
         # CURRENT_USER function), so every unquoted reference to the
         # `user` table — FROM user, JOIN user, INTO user, UPDATE user,
         # etc. — must be rewritten to the quoted identifier "user".
-        # This regex only matches the standalone word "user" (not
-        # "user_id", "users", "reported_by", etc.) so it's safe to run
-        # over the whole query string.
-        sql = re.sub(r'(?<![\w"])user(?![\w"])', '"user"', sql)
+        # This regex only matches the standalone word "user" used as an
+        # identifier (not "user_id", "users", "reported_by", and not a
+        # single-quoted string literal like 'user' used as a value in a
+        # WHERE clause), so it's safe to run over the whole query string.
+        sql = re.sub(r"(?<![\w\"'])user(?![\w\"'])", '"user"', sql)
         # This app only ever uses "?" as a placeholder character, so a
         # straight replace is safe here.
         return sql.replace("?", "%s")
